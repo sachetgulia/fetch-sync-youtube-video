@@ -36,3 +36,19 @@ func SearchController(request map[string]interface{}) ([]models.YoutubeData, err
 	fmt.Println("search resp", searchData)
 	return searchData, nil
 }
+
+func GetPaginatedDataController(request map[string]interface{}) ([]models.YoutubeData, error) {
+	var limit int64
+	var page int64
+	if val, ok := request["limit"].(float64); ok {
+		limit = int64(val)
+	}
+	if val, ok := request["page"].(float64); ok {
+		page = int64(val)
+	}
+	response, err := repository.GetDataPaginated(limit, page)
+	if err != nil {
+		return make([]models.YoutubeData, 0), err
+	}
+	return response, nil
+}

@@ -16,13 +16,20 @@ import (
 func FetchInit() error {
 
 	for {
-		// lastPublishedDataTime, _ := repository.GetLastPublished(nil)
+		lastPublishedDataTime, err := repository.GetLastPublished()
+		if err != nil {
+			//taking 3 day ago by default publish time
+			tempTime := (time.Now().AddDate(0, 0, -5))
+			lastPublishedDataTime = &tempTime
+		}
+		fmt.Println("time..", *lastPublishedDataTime)
 		// fmt.Println("las t",lastPublishedDataTime)
 		// fetch data in every 10 sec
 		//get request call
 		maxResults := 5
 		secretKey := "AIzaSyB12amtMkVda3obVW1O-U39P-8t2NMH3v4"
-		url := fmt.Sprintf(constants.YoutubeUrl, maxResults, secretKey)
+		url := fmt.Sprintf(constants.YoutubeUrl, maxResults, secretKey, lastPublishedDataTime.Format("2006-01-02T15:04:05Z"))
+		fmt.Println("url", url)
 		resp, err := http.Get(url)
 		if err != nil {
 			return err
@@ -54,6 +61,7 @@ func processingData(data map[string]interface{}) (*dtos.YoutubeDataDtos, error) 
 	if val, ok := data["items"].([]interface{}); ok {
 		videos = val
 	}
+	fmt.Println("length", len(videos))
 	for _, video := range videos {
 		if videoMap, ok := video.(map[string]interface{}); ok {
 
@@ -106,13 +114,13 @@ func processingData(data map[string]interface{}) (*dtos.YoutubeDataDtos, error) 
 			Title:             youtubeDataDtos.Title,
 			ChannelId:         youtubeDataDtos.ChannelId,
 			Description:       youtubeDataDtos.Description,
-			PublishedDateTime: youtubeDataDtos.PublishedDateTime,
+			PublishedDateTime: &youtubeDataDtos.PublishedDateTime,
 			// PublishedDateTime: time.Now(),
 			ChannelTitle: youtubeDataDtos.ChannelTitle,
 			ThumbnailUrl: youtubeDataDtos.ThumbnailUrl,
 			VideoId:      youtubeDataDtos.VideoId,
 		}
-		err := repository.CreateYoutubeData(nil, &youtubeDataModel)
+		err := repository.CreateYoutubeData(&youtubeDataModel)
 		if err != nil {
 			continue
 		}
